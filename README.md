@@ -2,7 +2,7 @@
 
 Template for a Groundworkers plugin.
 
-This plugin registers itself under the `groundworkers.plugins` entry-point group. Groundworkers discovers it at startup, resolves its configuration, builds its service, and registers its MCP tools against the one shared server. Nothing in Groundworkers imports this package by name.
+A Groundworkers plugin is a separate package that adds tools to the Groundworkers MCP server without Groundworkers knowing anything about it. You register one object under the `groundworkers.plugins` entry-point group, and at startup the host finds it, resolves whatever configuration it declared, builds it, and lets it register its tools against the shared server.
 
 ```toml
 [project.entry-points."groundworkers.plugins"]
@@ -11,50 +11,54 @@ gw_plugin_template = "gw_plugin_template.plugin:plugin"
 
 ## Tools
 
-| Tool | Purpose |
+| Tool | What it does |
 | --- | --- |
-| `gw_plugin_template_list` | List catalogue entries published by this plugin. |
-| `gw_plugin_template_search` | Find entries whose key, label or description matches a term. |
-| `gw_plugin_template_status` | Return the readiness report the setup console shows. |
+| `gw_plugin_template_list` | Lists the catalogue entries this plugin publishes. |
+| `gw_plugin_template_search` | Finds entries whose key, label or description matches a term. |
+| `gw_plugin_template_status` | Returns the same readiness report the setup console shows. |
+
+Tool names share one namespace with the host and every other installed plugin, which is why they all start with the plugin name.
 
 ## Configuration
 
-Settings live under `[tools.gw_plugin_template]` in the stack config file. Every field is optional; the plugin loads and explains itself when nothing is set.
+Settings live under `[tools.gw_plugin_template]` in the stack config file. Everything is optional, and the plugin will start and tell you what's missing rather than refusing to load.
 
 ```toml
 [tools.gw_plugin_template]
 catalogue_path = "./catalogue.json"   # relative paths resolve against this file
 default_limit = 10
-# catalogue_db = "my_db"              # a RefTo an entry configured elsewhere
-# api_token = "..."                   # declared Sensitive; redacted everywhere
+# catalogue_db = "my_db"              # a reference to an entry configured elsewhere
+# api_token = "..."                   # declared sensitive, so it's redacted everywhere
 ```
 
-`catalogue_db` and `api_token` are unset by default. Prefer a `RefTo` field over re-declaring host, port and credentials: the plugin stores only the logical reference name and sensitivity stays declared on the referenced schema.
+`catalogue_db` is a `RefTo` field, which means it holds the name of a database entry the operator has already set up rather than a host, port and password of its own. That's usually the right way to reach a database from a plugin, since the credentials stay declared on the connection they belong to. `api_token` shows the other case: a secret the plugin genuinely owns, marked `Sensitive()` so configuration views, review diffs and logs redact it.
 
-Run `omop-config` or the Groundworkers setup console to configure it interactively; the page is derived from the schema, so no Groundskeeping-aware code is needed here.
+You can fill both in by hand, or run `omop-config` or the Groundworkers setup console and let it build the form from the schema.
 
 ## Setup
 
-The plugin publishes one setup step, **Refresh catalogue**, in the Groundworkers setup console. It runs `python -m gw_plugin_template.setup_cli refresh` out of process through the host's durable maintenance-run store, so logs, progress, cancellation and retry are shared with core operations.
+The plugin adds one step, **Refresh catalogue**, to the Groundworkers setup console. Choosing it runs `python -m gw_plugin_template.setup_cli refresh` as a separate process through the host's maintenance-run store, so progress, logs, cancellation and retry work the same way they do for Groundworkers' own operations.
+
+You can run the same command yourself:
 
 ```bash
 OA_CONFIG_PATH=/path/to/config.toml \
   python -m gw_plugin_template.setup_cli refresh --source my-source
 ```
 
-## Layout
+## How the package is laid out
 
-| Module | Responsibility |
+| Module | What lives there |
 | --- | --- |
-| `config.py` | The `PackageConfigBase` subclass. `tool_name` must equal `plugin.name`. |
-| `adapters.py` | Everything that touches a database, file or network. |
-| `service.py` | Behaviour, with no MCP or server types. Testable by calling methods. |
-| `tools.py` | The MCP surface. The only module that knows about a server. |
-| `plugin.py` | Composition root: `name`, `config_cls`, `build`, `register`, plus the optional `setup_steps`, `verify_readiness` and `tui_workflow`. |
-| `setup_cli.py` | Long-running work, run out of process by the host. |
+| `config.py` | The settings class. Its `tool_name` has to match `plugin.name`. |
+| `adapters.py` | Anything that touches a database, a file or the network. |
+| `service.py` | The actual behaviour. No MCP or server types, so you can test it by calling it. |
+| `tools.py` | The MCP surface, and the only module that knows a server exists. |
+| `plugin.py` | Where it all comes together: `name`, `config_cls`, `build`, `register`, and the optional `setup_steps`, `verify_readiness` and `tui_workflow`. |
+| `setup_cli.py` | Slow work, run out of process by the host. |
 | `paths.py` | Resolves a configured relative path against the config file. |
 
-`build()` returns `None` when a prerequisite the plugin cannot work without is missing; `register()` is then never called and Groundworkers keeps serving its core capabilities. Prefer a degraded-but-explainable state over `None` whenever the plugin can still describe its own problem — that is what `verify_readiness` is for.
+`build()` can return `None` when something the plugin can't work without is missing. Groundworkers then skips it, carries on serving everything else, and reports why. It's usually better to build anyway and let `verify_readiness` explain the problem, so the operator can see what to fix instead of watching the plugin vanish.
 
 ## Development
 
@@ -65,7 +69,7 @@ uv run ty check src/
 uv run pytest -q
 ```
 
-Enable the `uv.lock` sync hook once per clone:
+The `uv.lock` sync hook needs enabling once per clone:
 
 ```bash
 git config core.hooksPath .githooks
@@ -73,8 +77,8 @@ git config core.hooksPath .githooks
 
 ## Versioning and releases
 
-The version is derived from git tags by [`hatch-vcs`](https://github.com/ofek/hatch-vcs); there is no version string in any source file and there is no `CHANGELOG.md`. The release history lives in GitHub Releases, drafted by `release-drafter` as PRs merge.
+Versions come from git tags via [`hatch-vcs`](https://github.com/ofek/hatch-vcs), so there's no version string anywhere in the source and no `CHANGELOG.md`. The release history lives in GitHub Releases, which `release-drafter` keeps up to date as PRs merge.
 
-Every pull request against `main` must carry exactly one of `breaking`, `feature`, `fix`, `dependencies`, or `chore`. See the [cava-devops PR workflow](https://australiancancerdatanetwork.github.io/cava-devops/guides/pr-workflow/).
+Every PR into `main` needs exactly one of `breaking`, `feature`, `fix`, `dependencies` or `chore`, and that label decides both the changelog section and the version bump. The [cava-devops PR workflow](https://australiancancerdatanetwork.github.io/cava-devops/guides/pr-workflow/) has the details.
 
 Contribution and labelling rules are in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md).

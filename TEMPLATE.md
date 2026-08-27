@@ -1,25 +1,18 @@
 # Using this template
 
-> This file documents the template itself. `scripts/bootstrap.py` deletes it,
-> along with itself, once you have run it.
+You're looking at a fresh repo made from `gw-plugin-template`. What's here is a small but complete Groundworkers plugin, already wired into the shared CAVA CI/CD, so you can start on your own code instead of picking bits out of an existing plugin and hoping you got all of them.
 
-## What "Use this template" does
+Work through the three steps below and you'll have a working, releasable plugin repo. This file and the bootstrap script delete themselves along the way, so nothing template-shaped survives into your project.
 
-Pressing **Use this template** on GitHub copies the files on `main` into a new
-repository with a single fresh commit. There is no fork link and no upstream, so
-the new repo never receives later changes made here.
+## What you actually got
 
-**Files come across.** `.github/workflows/`, the issue and PR templates,
-`.githooks/`, the whole `src/` tree.
+GitHub's "Use this template" button copies the files on `main` into a new repository and starts the history fresh. There's no fork relationship and no upstream, so later changes to the template won't find their way here.
 
-**Repository settings do not.** Labels, the branch ruleset, the `pypi`
-environment, secrets, the PyPI trusted publisher, the description and topics all
-start empty. Step 3 below is not optional.
+The files all came across: the workflows, the issue and PR templates, the git hook, the whole `src/` tree.
 
-**Nothing is substituted.** GitHub does no templating. The placeholder name
-appears in the distribution name, the `src/` directory, the wheel packages path,
-two entry points, `config.tool_name`, `plugin.name`, every tool name, the PyPI
-URL in `publish.yml`, the tests, and the README. That is what step 1 is for.
+Repository *settings* did not. Labels, the branch ruleset, the `pypi` environment, secrets, the PyPI trusted publisher, the repo description and topics all start out empty. Step 3 is where you fill them in.
+
+GitHub also doesn't substitute anything, so the placeholder name is still sitting in the distribution name, the `src/` directory, the wheel packages path, both entry points, `config.tool_name`, `plugin.name`, every tool name, the PyPI URL in `publish.yml`, the tests and the README. Step 1 deals with all of that in one go.
 
 ## 1. Rename it
 
@@ -27,12 +20,9 @@ URL in `publish.yml`, the tests, and the README. That is what step 1 is for.
 python3 scripts/bootstrap.py my-new-plugin --description "What this plugin does."
 ```
 
-Add `--dry-run` first if you want to see the file list. The script rewrites
-`gw_plugin_template` → `my_new_plugin`, `gw-plugin-template` → `my-new-plugin`
-and `GwPluginTemplate` → `MyNewPlugin`, renames `src/`, then deletes itself and
-this file. It is stdlib-only, so it runs before `uv sync`.
+Pass `--dry-run` first if you'd like to see which files it touches. The script swaps `gw_plugin_template` for `my_new_plugin`, `gw-plugin-template` for `my-new-plugin` and `GwPluginTemplate` for `MyNewPlugin`, renames the package directory, and then removes itself and this file. It only uses the standard library, so you can run it before `uv sync`.
 
-Then confirm the repo is green before you change any behaviour:
+Check that everything still passes before you start changing behaviour:
 
 ```bash
 uv sync --all-extras --dev
@@ -40,70 +30,52 @@ uv run ruff check . && uv run ty check src/ && uv run pytest -q
 git config core.hooksPath .githooks
 ```
 
+That last line is a per-clone setting that isn't committed, so everyone who clones the repo needs to run it once. It keeps `uv.lock` in step with `pyproject.toml` when you edit dependencies.
+
 ## 2. Make it your plugin
 
-The example is a catalogue lookup. Replace it, keeping the layering: `adapters`
-does I/O, `service` holds behaviour with no server types, `tools` is the only
-module that imports MCP concepts, `plugin` wires them together.
+The example plugin looks things up in a small catalogue file. Swap that out for whatever yours does, and try to keep the layering as you go: `adapters` is where anything touches a database, file or network; `service` holds the actual behaviour and knows nothing about servers; `tools` is the one module that talks to MCP; `plugin` ties the three together and hands them to Groundworkers.
 
-Delete what you do not need — each is independently optional:
+Most of the plugin contract is optional, and the example uses more of it than a typical plugin needs. Here's what you can throw away:
 
-| Surface | Delete if |
+| Surface | Safe to remove when |
 | --- | --- |
-| `setup_steps` on the plugin, and `setup_cli.py` | The plugin needs no data preparation. |
-| `tui_workflow` | Always, unless your config needs live discovery or branching. Returning `None` (the default) is the correct answer for plain scalar and `RefTo` fields. |
-| `verify_readiness`, `service.verify_readiness`, `*_status` tool | Operators never need to tell "configured" from "actually usable". Usually they do — keep it. |
-| `api_token` in `config.py` | The plugin owns no secret of its own. Prefer a `RefTo` so sensitivity stays declared on the referenced schema. |
-| `catalogue_db` in `config.py` | The shared CDM connection on `PluginContext` is enough. |
-| `paths.py` | No configured path resolves relative to the config file. |
+| `setup_steps` on the plugin, and `setup_cli.py` | Your plugin has no data to prepare before it can answer questions. |
+| `tui_workflow` | Almost always. Returning `None`, which is what the template does, tells Groundworkers to build the config page from your schema. Write a real one only if configuring your plugin needs live lookups or branching. |
+| `verify_readiness`, its counterpart on the service, and the `*_status` tool | Operators would never need to tell "configured" from "actually working". That's rarer than it sounds, so think twice here. |
+| `api_token` in `config.py` | Your plugin holds no secret of its own. A `RefTo` field is usually better anyway, since sensitivity is then declared once on the thing being referenced. |
+| `catalogue_db` in `config.py` | The CDM connection Groundworkers already resolved for you is enough. |
+| `paths.py` | Nothing in your config is a path that should resolve relative to the config file. |
 
-Keep `tests/test_plugin_contract.py`. Those assertions catch the wiring mistakes
-that otherwise fail silently at host startup: an entry point pointing at a class
-instead of a built instance, and `plugin.name` drifting from
-`Config.tool_name`, which Groundworkers rejects at startup.
+One thing to hold on to is `tests/test_plugin_contract.py`. Those tests look trivial, but they catch the two mistakes that otherwise show up as a plugin that installs cleanly and then quietly does nothing: an entry point pointing at a class rather than a built instance, and `plugin.name` drifting away from `Config.tool_name`.
 
-The full design rationale for each surface is in the Groundworkers docs, under
-Development and architecture → Plugin architecture.
+If you want the reasoning behind any part of the contract, the Groundworkers docs cover it under Development and architecture, in the plugin architecture page.
 
 ## 3. Apply the repository settings
 
-None of this is copied by the template. Run it against the new repo:
+These are the ones the template couldn't bring with it. Run them against your new repo:
 
 ```bash
 # From a cava-devops checkout:
 scripts/bootstrap-labels.sh AustralianCancerDataNetwork/my-new-plugin
 
-# The pypi environment publish.yml deploys into:
+# The pypi environment that publish.yml deploys into:
 gh api -X PUT repos/AustralianCancerDataNetwork/my-new-plugin/environments/pypi
 
-# Squash-only merges, with the PR title as the commit message:
+# Squash-only merges, using the PR title as the commit message:
 gh api -X PATCH repos/AustralianCancerDataNetwork/my-new-plugin \
   -F allow_merge_commit=false -F allow_rebase_merge=false -F allow_squash_merge=true \
   -f squash_merge_commit_title=PR_TITLE -f squash_merge_commit_message=BLANK
 ```
 
-Then add the branch ruleset on `main` (1 approval, linear history, force pushes
-and deletion blocked, required checks `label-gate / check` and
-`build-test / test`, admin bypass) and a pending PyPI trusted publisher for
-workflow `publish.yml` in environment `pypi`. Both are described in the
-[cava-devops setup guide](https://australiancancerdatanetwork.github.io/cava-devops/guides/setup-new-repo/).
+Two more to do by hand: a branch ruleset on `main` (one approval, linear history, force pushes and deletion blocked, `label-gate / check` and `build-test / test` as required checks, admin bypass for setup), and a pending PyPI trusted publisher pointing at workflow `publish.yml` in environment `pypi`. The [cava-devops setup guide](https://australiancancerdatanetwork.github.io/cava-devops/guides/setup-new-repo/) walks through both.
 
-## 4. Two things that will look wrong and are not
+## Things that look broken and aren't
 
-**The version is `0.1.devN+g<sha>`.** `hatch-vcs` derives the version from git
-tags and a fresh repo has none. The first release creates the first tag. Do not
-add a static `version =` to `pyproject.toml`.
+Your version will be something like `0.1.dev3+g1a2b3c4`. That's `hatch-vcs` reading the version out of git tags, and a new repo hasn't got any yet. Publishing your first release creates the first tag and the version settles down. Resist the urge to put a static `version =` back into `pyproject.toml`.
 
-**`groundworkers` is pinned to a git branch.** The `groundworkers.plugins`
-entry-point group exists only on the `plugins` branch; published 0.4.0 installs
-a plugin and silently never loads it. The pin in `[tool.uv.sources]` is a
-release blocker: uv sources are not recorded in wheel metadata, so a release
-made while it is in place would resolve to a broken 0.4.0. Drop the pin and
-raise the dependency to `groundworkers>=0.5,<1` once that release ships.
+`groundworkers` is pinned to a git branch in `[tool.uv.sources]`. The `groundworkers.plugins` entry-point group only exists on the `plugins` branch at the moment; the published 0.4.0 will install your plugin quite happily and then never load it. Treat that pin as a release blocker, because uv sources don't make it into wheel metadata, so anything you publish while it's there would resolve back to the broken 0.4.0. Once groundworkers 0.5.0 ships, drop the pin and move the dependency to `groundworkers>=0.5,<1`.
 
-## Keeping this template current
+## Keeping the template useful
 
-This repo is a normal repo: change it with a labelled PR like any other. Because
-generated repos have no upstream link, a change here reaches only plugins
-created after it. If a fix matters to existing plugins, apply it to them
-directly.
+The template is an ordinary repo, so improve it with a labelled PR like anything else. Just remember that generated repos have no link back, so a change here only reaches plugins created after it. If you fix something that existing plugins also got wrong, go and fix them too.

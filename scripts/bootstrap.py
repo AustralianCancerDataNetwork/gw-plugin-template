@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Rename this template into a real plugin, then remove itself.
+"""Rename this template into a real plugin, then get out of the way.
 
-GitHub's "Use this template" copies files verbatim -- it does not substitute
-anything -- so the placeholder name lands in about a dozen places. Run this
-once, immediately after generating the repo:
+GitHub copies template files verbatim and substitutes nothing, so the
+placeholder name is still scattered through about a dozen files. Run this once,
+right after generating the repo:
 
     python3 scripts/bootstrap.py my-new-plugin --description "What it does."
 
-Stdlib only, so it runs before `uv sync`.
+It only uses the standard library, so it works before `uv sync`.
 """
 
 from __future__ import annotations
@@ -121,16 +121,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nDry run: {changed} file(s) would be rewritten.")
         return 0
 
-    print(f"Renamed to {dist} ({changed} file(s) rewritten).\n")
-    print("Next:")
-    print("  1. uv sync --all-extras --dev && uv run pytest -q")
-    print("  2. git config core.hooksPath .githooks")
-    print("  3. Rename the classes and tools to match what your plugin does.")
-    print("  4. Apply the repo settings a template does NOT copy:")
-    print("     labels, the main ruleset, the pypi environment, and the")
-    print("     PyPI trusted publisher. See the cava-devops setup guide:")
-    print("     https://australiancancerdatanetwork.github.io/cava-devops/guides/setup-new-repo/")
-    print("  5. Commit on a branch and open a PR labelled 'chore'.")
+    print(f"Renamed to {dist}, rewriting {changed} file(s).\n")
+    print("From here:")
+    print("  Check it still passes:")
+    print("    uv sync --all-extras --dev && uv run pytest -q")
+    print("    git config core.hooksPath .githooks")
+    print("  Then make it yours, renaming the classes and tools as you go.")
+    print("  Finally, set up the repo settings a template can't bring with it:")
+    print("  labels, the main ruleset, the pypi environment and the PyPI")
+    print("  trusted publisher, all covered here:")
+    print("    https://australiancancerdatanetwork.github.io/cava-devops/guides/setup-new-repo/")
     return 0
 
 
