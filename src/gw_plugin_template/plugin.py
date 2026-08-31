@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from groundworkers.application.setup.maintenance_runs import (
-    MaintenancePlan,
-    MaintenanceStep,
+    Command,
+    CommandPlan,
+    CommandStep,
 )
-from groundworkers.application.setup.models import MaintenanceCommand
 from groundworkers.plugins import (
     PluginContext,
     PluginReadinessResult,
@@ -41,7 +41,7 @@ if TYPE_CHECKING:  # pragma: no cover - import kept out of the headless path
     )
 
 
-def _refresh_plan(values: Mapping[str, object], config_path: str) -> MaintenancePlan:
+def _refresh_plan(values: Mapping[str, object], config_path: str) -> CommandPlan:
     """Turn the operator's form values into a runnable plan.
 
     Setup arguments are per-run inputs, not configuration: a path to an export
@@ -52,12 +52,12 @@ def _refresh_plan(values: Mapping[str, object], config_path: str) -> Maintenance
     source = values.get("source")
     arguments = ("--source", str(source)) if source else ()
     resource = f"gw-plugin-template:{config_path}"
-    return MaintenancePlan(
+    return CommandPlan(
         kind="gw-plugin-template-refresh",
         steps=(
-            MaintenanceStep(
+            CommandStep(
                 key="refresh-catalogue",
-                command=MaintenanceCommand(
+                command=Command(
                     argv=(
                         sys.executable,
                         "-m",
