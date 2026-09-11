@@ -5,17 +5,12 @@ description = "Template for a Groundworkers plugin."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "groundworkers>=0.5,<1",
+  "groundworkers[tui]>=0.5,<1",
   "oa-configurator>=1.2.1,<2",
   "pydantic>=2,<3",
 ]
 
 [project.optional-dependencies]
-# Groundskeeping is only needed by a plugin that implements a custom
-# `tui_workflow`. Keeping it optional means a headless import stays light.
-tui = [
-  "groundskeeping>=0.6.1,<1",
-]
 dev = [
   "pytest>=9,<10",
   "ruff>=0.4",

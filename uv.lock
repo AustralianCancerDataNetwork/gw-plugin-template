@@ -1002,11 +1002,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/85/73/62193ce8ab7e87ce0791d2f97cfefad1644866a5139003ac92534c9d4415/groundworkers-0.5.0-py3-none-any.whl", hash = "sha256:4a0b388d8e6f50c40ec307d92a6682ed650f72758cc5be95d71a23291d694c90", size = 338544, upload-time = "2026-09-05T12:14:28.239Z" },
 ]
 
+[package.optional-dependencies]
+tui = [
+    { name = "groundskeeping" },
+    { name = "rich" },
+    { name = "textual" },
+]
+
 [[package]]
 name = "gw-plugin-template"
 source = { editable = "." }
 dependencies = [
-    { name = "groundworkers" },
+    { name = "groundworkers", extra = ["tui"] },
     { name = "oa-configurator" },
     { name = "pydantic" },
 ]
@@ -1017,21 +1024,17 @@ dev = [
     { name = "ruff" },
     { name = "ty" },
 ]
-tui = [
-    { name = "groundskeeping" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "groundskeeping", marker = "extra == 'tui'", specifier = ">=0.6.1,<1" },
-    { name = "groundworkers", specifier = ">=0.5,<1" },
+    { name = "groundworkers", extras = ["tui"], specifier = ">=0.5,<1" },
     { name = "oa-configurator", specifier = ">=1.2.1,<2" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9,<10" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.59" },
 ]
-provides-extras = ["dev", "tui"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "h11"
