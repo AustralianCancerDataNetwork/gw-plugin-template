@@ -5,7 +5,7 @@ description = "Template for a Groundworkers plugin."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "groundworkers>=0.4,<1",
+  "groundworkers>=0.5,<1",
   "oa-configurator>=1.2.1,<2",
   "pydantic>=2,<3",
 ]
@@ -46,14 +46,6 @@ packages = ["src/gw_plugin_template"]
 [tool.uv]
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 constraint-dependencies = ["setuptools>=83.0.0"]
-
-[tool.uv.sources]
-# The `groundworkers.plugins` entry-point group exists only on the groundworkers
-# `plugins` branch. Published 0.4.0 installs a plugin and silently never loads
-# it. Drop this pin and raise the dependency to `groundworkers>=0.5,<1` once
-# that release ships -- uv sources are not recorded in wheel metadata, so a
-# release made while this pin is here would resolve to a broken 0.4.0.
-groundworkers = { git = "https://github.com/AustralianCancerDataNetwork/groundworkers.git", branch = "plugins" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
