@@ -80,7 +80,7 @@ git config core.hooksPath .githooks
 
 The version reads as something like `0.1.dev3+g1a2b3c4`. `hatch-vcs` derives the version from git tags, and a new repository has none. The first release creates the first tag, after which the version is ordinary. Do not reintroduce a static `version =` into `pyproject.toml`.
 
-`groundworkers` is pinned to a git branch under `[tool.uv.sources]`. The `groundworkers.plugins` entry-point group currently exists only on the `plugins` branch; the published 0.4.0 installs a plugin without error and then never loads it. Treat the pin as a release blocker: uv sources are not recorded in wheel metadata, so a release made while it remains would resolve back to the broken 0.4.0. Remove the pin and raise the dependency to `groundworkers>=0.5,<1` once that release ships.
+The template requires the published Groundworkers 0.7 stack: `groundworkers[tui]>=0.7,<1` and `oa-configurator>=2,<3`. Import secret annotations such as `Sensitive` and `Secret` from `oa_configurator.refs`. Keep these dependency floors when bootstrapping a new plugin so its wheel resolves to a compatible host and configurator.
 
 ## Improving the template
 

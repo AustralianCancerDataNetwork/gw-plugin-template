@@ -5,8 +5,8 @@ description = "Template for a Groundworkers plugin."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "groundworkers[tui]>=0.5,<1",
-  "oa-configurator>=1.2.1,<2",
+  "groundworkers[tui]>=0.7,<1",
+  "oa-configurator>=2,<3",
   "pydantic>=2,<3",
 ]
 

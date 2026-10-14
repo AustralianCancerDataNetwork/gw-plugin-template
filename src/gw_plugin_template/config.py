@@ -12,8 +12,8 @@ from oa_configurator import (
     CDMDatabaseConfig,
     PackageConfigBase,
     RefTo,
-    Sensitive,
 )
+from oa_configurator.refs import Sensitive
 from pydantic import Field
 
 
@@ -56,7 +56,7 @@ class GwPluginTemplateConfig(PackageConfigBase):
     )
 
     # 4. A plugin-owned secret. Sensitivity is declared, never inferred from the
-    #    field name. `oa_configurator.Secret` is an alias for this annotation.
+    #    field name. `oa_configurator.refs.Secret` is an alias for this annotation.
     api_token: Annotated[str | None, Sensitive()] = Field(
         default=None,
         description=(
