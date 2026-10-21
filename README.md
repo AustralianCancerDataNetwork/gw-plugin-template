@@ -35,6 +35,10 @@ default_limit = 10
 
 Values can be set by hand, or through `omop-config` and the Groundworkers setup console, which derive the form from the schema.
 
+## Configuration linting
+
+`plugin.lint_config(config)` demonstrates the optional `GroundworkersPluginLinter` capability. Groundworkers defines the shared protocol and report types in `groundworkers.plugins`; this template method returns structured diagnostics with a stable code, severity, message and configuration path. The example checks whether the optional catalogue snapshot can be used, and never includes the configured path or secret values in a diagnostic. Groundworkers releases that include the linter protocol discover this hook. Older hosts can still load the template, but ignore this optional method. It covers plugin configuration only; prompt packs and Groundworkers knowledge packs need validation in their owning subsystems. Run this hook through `groundworkers lint-plugins`; the template does not define a separate CLI.
+
 ## Setup
 
 The plugin contributes one step, **Refresh catalogue**, to the Groundworkers setup console. Selecting it runs `python -m gw_plugin_template.setup_cli refresh` as a separate process through the host's maintenance-run store, so progress, logs, cancellation and retry behave as they do for the host's own operations.
@@ -54,7 +58,9 @@ OA_CONFIG_PATH=/path/to/config.toml \
 | `adapters.py` | Anything that reaches a database, a file or the network. |
 | `service.py` | Behaviour, importing no MCP or server types, and testable by direct call. |
 | `tools.py` | The MCP surface, and the only module aware that a server exists. |
-| `plugin.py` | Composition: `name`, `config_cls`, `build`, `register`, and the optional `setup_steps`, `verify_readiness` and `tui_workflow`. |
+| `plugin.py` | Composition: `name`, `config_cls`, `build`, `register`, and optional setup, readiness, configuration UI and linting hooks. |
+| `config_lint.py` | Plugin-specific config checks used by the example linting hook. |
+| `linting.py` | Shared result types, with a fallback for older Groundworkers hosts. |
 | `setup_cli.py` | Long-running work, run out of process by the host. |
 | `paths.py` | Resolves a configured relative path against the config file. |
 

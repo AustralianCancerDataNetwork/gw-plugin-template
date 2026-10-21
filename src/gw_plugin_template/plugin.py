@@ -4,6 +4,8 @@
 singleton. Groundworkers never imports this package by name: it only expects
 ``name``, ``config_cls``, ``build`` and ``register`` on the object, plus the
 optional ``setup_steps``, ``verify_readiness`` and ``tui_workflow`` surfaces.
+``lint_config`` below demonstrates the optional linter hook. Groundworkers
+versions implementing ``GroundworkersPluginLinter`` discover and call it.
 """
 
 from __future__ import annotations
@@ -29,6 +31,8 @@ from oa_configurator import PackageConfigBase
 
 from gw_plugin_template.adapters import CatalogueAdapter
 from gw_plugin_template.config import GwPluginTemplateConfig
+from gw_plugin_template.config_lint import lint_template_config
+from gw_plugin_template.linting import PluginLintReport
 from gw_plugin_template.paths import resolve_catalogue_path
 from gw_plugin_template.service import GwPluginTemplateService
 from gw_plugin_template.tools import register_tools
@@ -161,6 +165,9 @@ class GwPluginTemplatePlugin:
         """Register this plugin's MCP tools against the shared server."""
 
         register_tools(server, self._state(state).service)
+
+    def lint_config(self, config: PackageConfigBase | None) -> PluginLintReport:
+        return lint_template_config(config, self.name)
 
     def verify_readiness(self, state: object) -> PluginReadinessResult:
         """Read-only check surfaced in the setup console and the status tool."""

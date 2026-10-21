@@ -38,6 +38,7 @@ Most of the contract is optional, and the example exercises more of it than a ty
 | `setup_steps` on the plugin, and `setup_cli.py` | The plugin has no data to prepare before it can answer a question. |
 | `tui_workflow` | Almost always. Returning `None`, as the template does, directs Groundworkers to derive the configuration page from the schema. Implement it only where configuration requires live lookups or conditional branching. |
 | `verify_readiness`, its counterpart on the service, and the `*_status` tool | Operators have no reason to distinguish "configured" from "working". This is rarer than it appears. |
+| `lint_config`, `config_lint.py` and `linting.py` | The plugin has no config-dependent checks beyond the Pydantic schema. Keep the hook only for checks that need to inspect related files or cross-field rules. |
 | `api_token` in `config.py` | The plugin owns no secret. A `RefTo` field is preferable in most cases, since sensitivity is then declared once, on the referenced schema. |
 | `catalogue_db` in `config.py` | The CDM connection Groundworkers has already resolved is sufficient. |
 | `paths.py` | No configured value is a path that should resolve relative to the config file. |
