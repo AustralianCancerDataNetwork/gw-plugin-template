@@ -81,7 +81,9 @@ git config core.hooksPath .githooks
 
 The version reads as something like `0.1.dev3+g1a2b3c4`. `hatch-vcs` derives the version from git tags, and a new repository has none. The first release creates the first tag, after which the version is ordinary. Do not reintroduce a static `version =` into `pyproject.toml`.
 
-The template requires the published Groundworkers 0.7 stack: `groundworkers[tui]>=0.7,<1` and `oa-configurator>=2,<3`. Import secret annotations such as `Sensitive` and `Secret` from `oa_configurator.refs`. Keep these dependency floors when bootstrapping a new plugin so its wheel resolves to a compatible host and configurator.
+The template requires the published Groundworkers 0.10 stack: `groundworkers[tui]>=0.10,<1` and `oa-configurator>=2.1,<3`. Import secret annotations such as `Sensitive` and `Secret` from `oa_configurator.refs`, and the lint types from `groundworkers.plugins` (re-exported by `linting.py`). Keep these dependency floors when bootstrapping a new plugin so its wheel resolves to a compatible host and configurator. A plugin that reads DuckDB vocabularies or DuckDB VSS embeddings also needs the `duckdb` extra: `groundworkers[tui,duckdb]>=0.10,<1`.
+
+Check a configured plugin's settings without starting the server: `groundworkers lint-plugins --config-path /path/to/config.toml` prints a JSON report and exits 1 on any error.
 
 ## Improving the template
 

@@ -143,9 +143,12 @@ class GwPluginTemplatePlugin:
             path = None
 
         # Prefer a resource Groundworkers already resolved. Only resolve your
-        # own when the plugin genuinely needs a different database.
+        # own when the plugin genuinely needs a different database. Read the
+        # shared CDM through `cdm_session_factory`: it routes vocabulary and
+        # primary roles, including on split-vocabulary stacks, where
+        # `cdm_engine` cannot reach the vocabulary.
         database_source = "Shared Groundworkers CDM database"
-        available = context.cdm_engine is not None
+        available = context.cdm_session_factory is not None
         if config.catalogue_db is not None:
             context.resolver.resolve_database(config.catalogue_db)
             database_source = f"Configured database: {config.catalogue_db}"
