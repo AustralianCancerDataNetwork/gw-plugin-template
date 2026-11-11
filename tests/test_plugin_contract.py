@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from importlib.metadata import entry_points
-from types import SimpleNamespace
 
-from groundworkers import plugins as host_plugin_contract
 from groundworkers.plugins import (
     GroundworkersPluginConfigUI,
     GroundworkersPluginReadiness,
     GroundworkersPluginSetup,
+    PluginLintReport,
+    lint_plugin_config,
 )
 from oa_configurator import PackageConfigBase
 
-from gw_plugin_template import linting as linting_contract
 from gw_plugin_template.config import GwPluginTemplateConfig
 from gw_plugin_template.linting import PluginLintSeverity
 from gw_plugin_template.plugin import plugin
@@ -105,29 +104,12 @@ def test_config_linter_accepts_a_valid_catalogue_snapshot(tmp_path) -> None:
     assert report.diagnostics == ()
 
 
-def test_host_accepts_template_lint_report_when_contract_is_available() -> None:
-    host_report_type = getattr(host_plugin_contract, "PluginLintReport", None)
-    host_dispatch = getattr(host_plugin_contract, "lint_plugin_config", None)
-    if host_report_type is None or host_dispatch is None:
-        import pytest
+def test_host_accepts_template_lint_report() -> None:
+    report = lint_plugin_config(plugin, GwPluginTemplateConfig())
 
-        pytest.skip("Installed Groundworkers does not expose plugin linting yet.")
-
-    report = host_dispatch(plugin, GwPluginTemplateConfig())
-
-    assert isinstance(report, host_report_type)
+    assert isinstance(report, PluginLintReport)
     assert report.plugin == plugin.name
     assert report.valid
-
-
-def test_partial_host_lint_contract_uses_local_types_as_a_set(monkeypatch) -> None:
-    monkeypatch.setattr(
-        linting_contract,
-        "_host_plugin_contract",
-        SimpleNamespace(PluginLintReport=object),
-    )
-
-    assert linting_contract._host_lint_types() == linting_contract._LOCAL_LINT_TYPES
 
 
 def test_build_returns_none_for_foreign_config(fake_context) -> None:

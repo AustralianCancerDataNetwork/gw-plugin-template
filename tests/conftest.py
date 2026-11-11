@@ -57,6 +57,7 @@ class FakeContext:
     embedding_backend_factory: object | None = None
     embedding_model_backend_factory: object | None = None
     chat_backend_factory: object | None = None
+    cdm_session_factory: object | None = "session-factory"
 
 
 @pytest.fixture
