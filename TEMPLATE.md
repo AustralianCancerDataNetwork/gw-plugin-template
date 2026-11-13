@@ -43,6 +43,14 @@ Most of the contract is optional, and the example exercises more of it than a ty
 | `catalogue_db` in `config.py` | The CDM connection Groundworkers has already resolved is sufficient. |
 | `paths.py` | No configured value is a path that should resolve relative to the config file. |
 
+### If the plugin adds embeddings or vector search
+
+The example does not use embeddings. If your plugin adds query embedding, follow the host's native async pattern: MCP tools that encode queries are `async`, call `await model_backend.async_embed_texts(...)`, and pass the vector to the synchronous reader lookup. Resolve model and index settings from the store's registered model record; if the live model is not registered, raise `NOT_FOUND` instead of falling back to another record. Stored-vector queries against the host store must use a vector from that same registered model and provider.
+
+Open and close **plugin-owned** DuckDB stores per operation. Never close what `context.embedding_backend_factory()` returns: it is the host's shared reader, and the host owns its lifecycle. Map backend failures to public `GroundworkersError` codes with `embedding_store_error`.
+
+Keep this path covered with tests that call the registered tool on a running event loop using an async-only backend, check missing or incompatible registry records, and verify an isolated DuckDB writer can open after a query. The detailed agent checklist is in `AGENTS.md` and remains in repositories created from this template after the bootstrap step removes this file.
+
 Retain `tests/test_plugin_contract.py`. These assertions appear trivial, but they detect the two errors that otherwise present as a plugin which installs correctly and then does nothing: an entry point resolving to a class rather than a constructed instance, and `plugin.name` diverging from `Config.tool_name`.
 
 The Groundworkers documentation covers the reasoning behind each surface under Development and architecture, on the plugin architecture page.
